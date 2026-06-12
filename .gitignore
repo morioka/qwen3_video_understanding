@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# uv / virtualenv
+.venv/
+
+# local environment
+.env
+.env.*
+!.env.example
+
+# experiment inputs / outputs
+runs/
+outputs/
+artifacts/
+data/
+videos/
+frames/
+
+# generated media / transcripts
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.webm
+*.wav
+*.mp3
+transcript_segments.json
+chunks.json
+chunk_inputs/
+chunk_analysis_prompt.md
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
