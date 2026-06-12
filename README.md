@@ -93,6 +93,13 @@ uv run run-vlm-chunks \
   --dry-run
 ```
 
+VLM のログとして、出力側は実行時に保存される。入力側の request payload は現状 `--dry-run` 時のみ `chunk_results/requests/` に保存され、実 VLM 送信時には保存しない。
+
+- input preview: `runs/example/chunk_results/requests/chunk_0000.json` (`--dry-run` 時のみ。画像 data URL は伏せる)
+- parsed output: `runs/example/chunk_results/chunk_0000.json`
+- raw output: `runs/example/chunk_results/raw/chunk_0000.response.json`
+- model message text: `runs/example/chunk_results/raw/chunk_0000.message.txt`
+
 chunk 解析結果を統合する場合:
 
 ```bash
@@ -121,6 +128,7 @@ uv run integrate-chunk-results \
 - `runs/example/chunk_inputs/chunk_0000.json`: chunk ごとの VLM 入力
 - `runs/example/chunk_analysis_prompt.md`: イベント抽出用プロンプト
 - `runs/example/frames/`: `--extract-frames` 指定時の抽出画像
+- `runs/example/chunk_results/requests/`: `--dry-run` 指定時の VLM request preview
 - `runs/example/chunk_results/chunk_0000.json`: chunk ごとの VLM 解析結果
 - `runs/example/chunk_results/raw/`: VLM の生レスポンスと message text
 - `runs/example/chunk_results/memory.json`: `--memory-mode rolling` 指定時の蓄積 memory
