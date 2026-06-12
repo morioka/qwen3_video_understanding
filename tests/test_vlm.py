@@ -4,7 +4,12 @@ import json
 import unittest
 from unittest.mock import patch
 
-from video_vlm_experiment.vlm import VlmClient, extract_message_text, parse_json_from_text
+from video_vlm_experiment.vlm import (
+    VlmClient,
+    build_chunk_messages,
+    extract_message_text,
+    parse_json_from_text,
+)
 
 
 class VlmJsonParsingTest(unittest.TestCase):
@@ -73,6 +78,27 @@ class VlmClientTest(unittest.TestCase):
         )
         self.assertEqual(captured["timeout"], 5.0)
         self.assertEqual(extract_message_text(response), '{"events": []}')
+
+
+class ChunkMessageTest(unittest.TestCase):
+    def test_includes_previous_memory_when_provided(self) -> None:
+        messages = build_chunk_messages(
+            chunk_input={
+                "chunk_index": 1,
+                "chunk_start": 10.0,
+                "chunk_end": 20.0,
+                "frames": [],
+                "transcript_segments": [],
+            },
+            prompt="Analyze.",
+            previous_memory="previous memory text",
+            include_images=False,
+        )
+
+        content = messages[0]["content"]
+        self.assertEqual(content[0]["text"], "Analyze.")
+        self.assertEqual(content[1]["text"], "previous memory text")
+        self.assertIn("Analyze this chunk input JSON", content[2]["text"])
 
 
 if __name__ == "__main__":

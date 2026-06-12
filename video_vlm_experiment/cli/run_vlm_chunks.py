@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from video_vlm_experiment.io import load_json, write_json
+from video_vlm_experiment.memory import RollingMemory
 from video_vlm_experiment.prompts import CHUNK_ANALYSIS_PROMPT
 from video_vlm_experiment.vlm import (
     VlmClient,
@@ -33,25 +34,36 @@ def main() -> None:
 
     raw_dir = args.output_dir / "raw"
     request_dir = args.output_dir / "requests"
+    memory_path = args.output_dir / "memory.json"
     args.output_dir.mkdir(parents=True, exist_ok=True)
     raw_dir.mkdir(parents=True, exist_ok=True)
     if args.dry_run:
         request_dir.mkdir(parents=True, exist_ok=True)
 
     processed_count = 0
+    rolling_memory = RollingMemory()
     for chunk_path in chunk_paths:
         output_path = args.output_dir / chunk_path.name
         if args.skip_existing and output_path.exists():
+            if args.memory_mode == "rolling":
+                existing_result = load_json(output_path)
+                if not isinstance(existing_result, dict):
+                    raise ValueError(f"{output_path} must contain a JSON object")
+                rolling_memory.add_chunk_result(existing_result)
             continue
 
         chunk_input = load_json(chunk_path)
         if not isinstance(chunk_input, dict):
             raise ValueError(f"{chunk_path} must contain a JSON object")
         chunk_input = _normalize_frame_paths(chunk_input, chunk_path)
+        previous_memory = None
+        if args.memory_mode == "rolling":
+            previous_memory = rolling_memory.to_prompt_text(args.memory_limit)
 
         messages = build_chunk_messages(
             chunk_input=chunk_input,
             prompt=prompt,
+            previous_memory=previous_memory,
             include_images=not args.no_images,
             max_images=args.max_images,
         )
@@ -86,10 +98,15 @@ def main() -> None:
         parsed.setdefault("chunk_end", chunk_input.get("chunk_end"))
 
         write_json(output_path, parsed)
+        if args.memory_mode == "rolling":
+            rolling_memory.add_chunk_result(parsed)
+            write_json(memory_path, rolling_memory.to_dict())
         write_json(raw_dir / f"{chunk_path.stem}.response.json", response)
         (raw_dir / f"{chunk_path.stem}.message.txt").write_text(text, encoding="utf-8")
         processed_count += 1
 
+    if args.memory_mode == "rolling":
+        write_json(memory_path, rolling_memory.to_dict())
     print(f"processed {processed_count} chunk inputs into {args.output_dir}")
 
 
@@ -169,6 +186,18 @@ def parse_args() -> argparse.Namespace:
         "--skip-existing",
         action="store_true",
         help="Skip chunks whose parsed output file already exists.",
+    )
+    parser.add_argument(
+        "--memory-mode",
+        default="off",
+        choices=("off", "rolling"),
+        help="Memory carryover mode. Use rolling to pass previous memory_update entries to later chunks.",
+    )
+    parser.add_argument(
+        "--memory-limit",
+        type=int,
+        default=20,
+        help="Maximum previous memory items sent to each chunk when --memory-mode rolling is used.",
     )
     parser.add_argument(
         "--no-images",

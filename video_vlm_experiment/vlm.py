@@ -69,6 +69,7 @@ def build_chunk_messages(
     *,
     chunk_input: dict[str, Any],
     prompt: str,
+    previous_memory: str | None = None,
     include_images: bool = True,
     max_images: int | None = None,
 ) -> list[dict[str, Any]]:
@@ -77,12 +78,21 @@ def build_chunk_messages(
             "type": "text",
             "text": prompt.strip(),
         },
+    ]
+    if previous_memory:
+        content.append(
+            {
+                "type": "text",
+                "text": previous_memory,
+            }
+        )
+    content.append(
         {
             "type": "text",
             "text": "Analyze this chunk input JSON:\n"
             + json.dumps(_metadata_only_chunk(chunk_input), ensure_ascii=False, indent=2),
-        },
-    ]
+        }
+    )
 
     if include_images:
         image_count = 0

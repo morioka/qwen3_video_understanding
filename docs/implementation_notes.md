@@ -133,6 +133,21 @@ uv run run-vlm-chunks \
 
 API key は `VLM_API_KEY` を既定値として読む。ローカル vLLM 等で不要な場合は未設定のままでよい。
 
+既定では各 chunk を独立に送る。前 chunk までの `memory_update` を次 chunk の入力に含める場合は `--memory-mode rolling` を使う。
+
+```bash
+uv run run-vlm-chunks \
+  --chunk-input-dir runs/example/chunk_inputs \
+  --output-dir runs/example/chunk_results \
+  --base-url http://localhost:8000/v1 \
+  --model Qwen3-VL \
+  --response-format-json \
+  --memory-mode rolling \
+  --memory-limit 20
+```
+
+rolling memory は `chunk_results/memory.json` にも保存する。memory は過去 chunk の解析結果であり、現在 chunk の映像証拠ではないため、prompt 内で現在 chunk の観察を優先するよう明示している。
+
 `--dry-run` を指定すると、実際の HTTP 送信はせず、画像 data URL を伏せた request preview を `chunk_results/requests/` に出力する。
 
 ## 解析結果の統合

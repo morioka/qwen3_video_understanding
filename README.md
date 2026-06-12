@@ -68,6 +68,21 @@ uv run run-vlm-chunks \
 
 `run-vlm-chunks` は OpenAI 互換の `/chat/completions` エンドポイントを使う。API key が必要な場合は `VLM_API_KEY` に設定するか、`--api-key-env` / `--api-key` を指定する。
 
+前 chunk までの `memory_update` を次 chunk に引き継ぐ場合:
+
+```bash
+uv run run-vlm-chunks \
+  --chunk-input-dir runs/example/chunk_inputs \
+  --output-dir runs/example/chunk_results \
+  --base-url http://localhost:8000/v1 \
+  --model Qwen3-VL \
+  --response-format-json \
+  --memory-mode rolling \
+  --memory-limit 20
+```
+
+既定は `--memory-mode off` で、chunk ごとに独立して解析する。
+
 実リクエスト前に payload を確認する場合:
 
 ```bash
@@ -108,4 +123,5 @@ uv run integrate-chunk-results \
 - `runs/example/frames/`: `--extract-frames` 指定時の抽出画像
 - `runs/example/chunk_results/chunk_0000.json`: chunk ごとの VLM 解析結果
 - `runs/example/chunk_results/raw/`: VLM の生レスポンスと message text
+- `runs/example/chunk_results/memory.json`: `--memory-mode rolling` 指定時の蓄積 memory
 - `runs/example/integrated_analysis.json`: 統合済みイベント・エンティティ・memory・不確実事項
