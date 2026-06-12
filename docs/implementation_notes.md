@@ -72,6 +72,24 @@ uv run prepare-video-chunks \
   --extract-frames
 ```
 
+## 書き起こしとフレームの対応づけ
+
+現状では、書き起こしはタイムスタンプに基づいて「重なる chunk」に添付する。
+
+`run-vlm-chunks` の user message では、chunk 全体の `transcript_segments` と `frames` を同じ JSON に入れ、画像を送る場合は各画像の直前に `Frame time: ... seconds` を付ける。したがって VLM は発話の `start` / `end` とフレームの `time` から対応関係を推論できる。
+
+ただし、現状では「各フレームに対応する発話」を事前に明示的には紐づけていない。
+
+将来の実現形態としては複数ある。
+
+- chunk 単位: 現状の方式。chunk 内の全発話と全フレームをまとめて渡す。単純で情報落ちが少ない。
+- frame 単位: 各 frame に `nearby_transcript_segments` を付ける。画像ごとの音声文脈が明確になる。
+- message 単位: 各画像の直前に、その frame 時刻近辺の発話だけを text として挿入する。OpenAI 互換 VLM の入力構造と相性がよい。
+- window 単位: frame 時刻の前後 N 秒の発話を対応づける。発話と作業のタイミングが少しずれる動画に強い。
+- event 候補単位: 発話境界・無音・視覚変化点を合わせてイベント候補を作り、各候補に複数 frame と発話を紐づける。実装は重いが後段のイベント抽出に近い。
+
+初期実験では、まず chunk 単位で十分に回し、VLM が発話と画像を取り違える、または画像ごとの根拠が曖昧になる場合に frame 単位または message 単位へ進める。
+
 ## uv 管理
 
 このプロジェクトは `uv` で管理する。
