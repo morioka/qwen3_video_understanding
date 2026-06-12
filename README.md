@@ -27,6 +27,8 @@ uv sync
 6. 必要に応じて `ffmpeg` でフレーム画像を抽出する
 7. chunk 解析用プロンプトを出力する
 
+Whisper で `transcript_segments.json` を作る手順は `docs/transcription_with_whisper.md` を参照する。
+
 ### 使い方
 
 ```bash

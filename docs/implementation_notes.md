@@ -113,7 +113,7 @@ git 管理しないもの:
 
 ## 未実装の改善候補
 
-- Whisper 書き起こし実行部分
+- Whisper 書き起こし実行部分の自動化
 - OpenAI 互換 VLM / Qwen VLM への送信処理
 - PySceneDetect 等によるシーン変化ベースの境界候補
 - CLIP 等による画像特徴量変化点の検出
