@@ -114,8 +114,41 @@ git 管理しないもの:
 ## 未実装の改善候補
 
 - Whisper 書き起こし実行部分の自動化
-- OpenAI 互換 VLM / Qwen VLM への送信処理
 - PySceneDetect 等によるシーン変化ベースの境界候補
 - CLIP 等による画像特徴量変化点の検出
-- イベント抽出結果の全体整合化
 - 不確実区間の backward refinement
+
+## VLM 送信
+
+`run-vlm-chunks` は `chunk_inputs/chunk_*.json` を読み込み、OpenAI 互換の `/chat/completions` に送信する。
+
+```bash
+uv run run-vlm-chunks \
+  --chunk-input-dir runs/example/chunk_inputs \
+  --output-dir runs/example/chunk_results \
+  --base-url http://localhost:8000/v1 \
+  --model Qwen3-VL \
+  --response-format-json
+```
+
+API key は `VLM_API_KEY` を既定値として読む。ローカル vLLM 等で不要な場合は未設定のままでよい。
+
+`--dry-run` を指定すると、実際の HTTP 送信はせず、画像 data URL を伏せた request preview を `chunk_results/requests/` に出力する。
+
+## 解析結果の統合
+
+`integrate-chunk-results` は chunk ごとの JSON 結果を読み込み、時系列イベント、エンティティ、memory、不確実事項を 1 つの JSON にまとめる。
+
+```bash
+uv run integrate-chunk-results \
+  --input-dir runs/example/chunk_results \
+  --output runs/example/integrated_analysis.json
+```
+
+初期版の統合は決定的なルールベースで行う。
+
+- イベントに `source_chunk_index` と `time_seconds` を付ける
+- entity は `type` と `label` の小文字一致で同一視する
+- memory と uncertainties は source chunk 情報付きで集約する
+
+意味的に似た entity の統合、後続チャンクで判明した名称による過去イベント修正、矛盾解消は今後の backward refinement 側で扱う。

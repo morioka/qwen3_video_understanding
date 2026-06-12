@@ -26,6 +26,8 @@ uv sync
 5. 各 chunk 内のフレーム時刻を生成する
 6. 必要に応じて `ffmpeg` でフレーム画像を抽出する
 7. chunk 解析用プロンプトを出力する
+8. OpenAI 互換 VLM に chunk 入力を送信する
+9. chunk ごとの解析結果を時系列に統合する
 
 Whisper で `transcript_segments.json` を作る手順は `docs/transcription_with_whisper.md` を参照する。
 
@@ -53,6 +55,37 @@ uv run prepare-video-chunks \
 
 `--video-duration` を指定しない場合は `ffprobe` を使って動画長を取得する。`--extract-frames` を使う場合は `ffmpeg` が必要。
 
+VLM に送信する場合:
+
+```bash
+uv run run-vlm-chunks \
+  --chunk-input-dir runs/example/chunk_inputs \
+  --output-dir runs/example/chunk_results \
+  --base-url http://localhost:8000/v1 \
+  --model Qwen3-VL \
+  --response-format-json
+```
+
+`run-vlm-chunks` は OpenAI 互換の `/chat/completions` エンドポイントを使う。API key が必要な場合は `VLM_API_KEY` に設定するか、`--api-key-env` / `--api-key` を指定する。
+
+実リクエスト前に payload を確認する場合:
+
+```bash
+uv run run-vlm-chunks \
+  --chunk-input-dir runs/example/chunk_inputs \
+  --output-dir runs/example/chunk_results \
+  --model Qwen3-VL \
+  --dry-run
+```
+
+chunk 解析結果を統合する場合:
+
+```bash
+uv run integrate-chunk-results \
+  --input-dir runs/example/chunk_results \
+  --output runs/example/integrated_analysis.json
+```
+
 ### 入力
 
 `transcript_segments.json`:
@@ -73,3 +106,6 @@ uv run prepare-video-chunks \
 - `runs/example/chunk_inputs/chunk_0000.json`: chunk ごとの VLM 入力
 - `runs/example/chunk_analysis_prompt.md`: イベント抽出用プロンプト
 - `runs/example/frames/`: `--extract-frames` 指定時の抽出画像
+- `runs/example/chunk_results/chunk_0000.json`: chunk ごとの VLM 解析結果
+- `runs/example/chunk_results/raw/`: VLM の生レスポンスと message text
+- `runs/example/integrated_analysis.json`: 統合済みイベント・エンティティ・memory・不確実事項

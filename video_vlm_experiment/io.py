@@ -14,6 +14,10 @@ def load_transcript(path: Path) -> list[TranscriptSegment]:
     return [TranscriptSegment.from_dict(segment) for segment in raw_segments]
 
 
+def load_json(path: Path) -> object:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def write_json(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(

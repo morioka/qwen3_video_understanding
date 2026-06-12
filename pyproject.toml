@@ -8,7 +8,9 @@ dependencies = []
 
 [project.scripts]
 convert-whisper-json = "video_vlm_experiment.cli.convert_whisper_json:main"
+integrate-chunk-results = "video_vlm_experiment.cli.integrate_chunk_results:main"
 prepare-video-chunks = "video_vlm_experiment.cli.prepare_video_chunks:main"
+run-vlm-chunks = "video_vlm_experiment.cli.run_vlm_chunks:main"
 
 [build-system]
 requires = ["hatchling"]
